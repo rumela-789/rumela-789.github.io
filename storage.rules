@@ -1,0 +1,29 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // ছবি: লগইন করা ইউজার পড়তে পারবে; শুধু নিজের ফোল্ডারে, ২ MB-এর কম ছবি লিখতে পারবে
+    match /imgs/{uid}/{file} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+    // স্টোরি: ছবি বা ভিডিও, সর্বোচ্চ ১৫ MB, শুধু নিজের ফোল্ডারে
+    match /stories/{uid}/{file} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('(image|video)/.*');
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+    // ভিডিও পোস্ট: সর্বোচ্চ ২৫ MB, শুধু নিজের ফোল্ডারে
+    match /posts/{uid}/{file} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.size < 25 * 1024 * 1024
+        && request.resource.contentType.matches('video/.*');
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
